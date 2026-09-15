@@ -1,0 +1,3 @@
+[submodule "external/ml-core"]
+	path = external/ml-core
+	url = https://github.com/Icey18899877399/26MLP_team07.git
