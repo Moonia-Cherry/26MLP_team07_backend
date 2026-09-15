@@ -1,11 +1,11 @@
 # 《机器学习理论与实践》交互平台
 
-本仓库负责课程大作业的 Web 交互平台：Vue 3 前端、FastAPI interaction layer，以及与独立 ML 仓库之间的稳定集成边界。模型算法、训练、数据处理和评价仍由 [26MLP_team07](https://github.com/Icey18899877399/26MLP_team07) 独立维护，本仓库不会复制一套 ML Core。
+本仓库负责课程大作业的 FastAPI interaction layer、与独立 ML 仓库之间的稳定集成边界，以及可选的统一交付入口。前端由另一位成员负责；无论它最终位于本仓库还是独立仓库，都只通过 HTTP/OpenAPI 使用本服务。模型算法、训练、数据处理和评价仍由 [26MLP_team07](https://github.com/Icey18899877399/26MLP_team07) 独立维护，本仓库不会复制一套 ML Core。
 
 ## 双仓库关系
 
 ```text
-Vue 3 --HTTP/JSON--> FastAPI --Python API--> ml_core --internal--> Models
+Frontend --HTTP/JSON--> FastAPI --Python API--> ml_core --internal--> Models
 ```
 
 ML 源码以 Git submodule 位于 `external/ml-core`。Submodule 保留独立历史并让本仓库只记录一个 commit pointer；运行时边界则是未来可安装的 Python package `ml_core`。详见 [架构说明](docs/ARCHITECTURE.md) 和 [ML 集成合同](docs/ML_INTEGRATION_CONTRACT.md)。
@@ -54,22 +54,14 @@ python -m pip install -e external/ml-core
 
 随后重启 FastAPI。`/api/health` 应从 `available: false` 变为 `available: true`。FastAPI 不会回退到 `Models.*` 私有 import。
 
-## Frontend
+## Frontend ownership
 
-需要 Node.js 20+ 与 pnpm：
+本仓库当前不包含前端实现，也不创建空的 `frontend/` 占位目录。未来两种源码管理方式都使用根目录的 `frontend/` 路径：
 
-```powershell
-pnpm --dir frontend install
-pnpm --dir frontend dev
-```
+- 同仓库：前端成员直接在 `frontend/` 中开发并提交。
+- 独立仓库：在前端仓库创建后执行 `git submodule add <frontend-repo-url> frontend`，由本仓库固定交付 SHA。
 
-打开 `http://127.0.0.1:5173`。Vite 会把 `/api` 代理到本地 FastAPI。ML API 不可用时，页面会明确显示“ML 待接入”并禁用真实实验入口，不生成 mock 结果。
-
-生产构建：
-
-```powershell
-pnpm --dir frontend build
-```
+两种方式共享相同的 HTTP 合同，不要求后端代码变化。禁止前端仓库反向包含本仓库，以免形成循环 submodule。
 
 ## 测试
 

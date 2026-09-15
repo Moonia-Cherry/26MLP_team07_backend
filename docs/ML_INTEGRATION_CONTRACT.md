@@ -122,7 +122,7 @@ Diagnostics 为 Web 可视化提供原始结构化数据，例如：
 - 异常检测：scores、threshold、labels；
 - 通用：feature names 与 feature importance。
 
-每项应包含足够的标签、顺序和含义，且数组长度保持合理。Vue + ECharts 负责渲染；ML 仓库现有 Matplotlib 报告图不整体迁入交互仓库。
+每项应包含足够的标签、顺序和含义，且数组长度保持合理。前端消费者负责渲染；ML 仓库现有 Matplotlib 报告图不整体迁入交互仓库。
 
 ## 函数语义
 
