@@ -2,13 +2,13 @@
 
 本仓库负责课程大作业的 FastAPI interaction layer、与独立 ML 仓库之间的稳定集成边界，以及可选的统一交付入口。前端由另一位成员负责；无论它最终位于本仓库还是独立仓库，都只通过 HTTP/OpenAPI 使用本服务。模型算法、训练、数据处理和评价仍由 [26MLP_team07](https://github.com/Icey18899877399/26MLP_team07) 独立维护，本仓库不会复制一套 ML Core。
 
-## 双仓库关系
+## 仓库与运行时关系
 
 ```text
 Frontend --HTTP/JSON--> FastAPI --Python API--> ml_core --internal--> Models
 ```
 
-ML 源码以 Git submodule 位于 `external/ml-core`。Submodule 保留独立历史并让本仓库只记录一个 commit pointer；运行时边界则是未来可安装的 Python package `ml_core`。详见 [架构说明](docs/ARCHITECTURE.md) 和 [ML 集成合同](docs/ML_INTEGRATION_CONTRACT.md)。
+ML 源码以 Git submodule 位于 `external/ml-core`。Submodule 保留独立历史并让本仓库只记录一个 commit pointer；运行时边界则是未来可安装的 Python package `ml_core`。详见 [架构说明](docs/ARCHITECTURE.md)、[HTTP API 合同](docs/HTTP_API_CONTRACT.md) 和 [ML 集成合同](docs/ML_INTEGRATION_CONTRACT.md)。
 
 ## 获取代码
 
@@ -34,6 +34,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -e ".[test]"
+Copy-Item .env.example .env
 python -m uvicorn backend.main:app --reload
 ```
 
@@ -43,6 +44,16 @@ python -m uvicorn backend.main:app --reload
 - `GET /api/models`
 - `GET /api/datasets`
 - `POST /api/experiments`
+
+默认配置允许 `http://localhost:5173` 和 `http://127.0.0.1:5173` 跨域访问。可在 `.env` 中设置：
+
+```dotenv
+MLP_CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+MLP_ML_PACKAGE=ml_core
+MLP_LOG_LEVEL=INFO
+```
+
+`MLP_CORS_ORIGINS` 是逗号分隔的显式 origin 白名单，不接受 `*`、路径或带用户名/密码的 URL。
 
 ## ML package
 
@@ -61,7 +72,7 @@ python -m pip install -e external/ml-core
 - 同仓库：前端成员直接在 `frontend/` 中开发并提交。
 - 独立仓库：在前端仓库创建后执行 `git submodule add <frontend-repo-url> frontend`，由本仓库固定交付 SHA。
 
-两种方式共享相同的 HTTP 合同，不要求后端代码变化。禁止前端仓库反向包含本仓库，以免形成循环 submodule。
+两种方式共享相同的 [HTTP API 合同](docs/HTTP_API_CONTRACT.md)，不要求后端代码变化。禁止前端仓库反向包含本仓库，以免形成循环 submodule。
 
 ## 测试
 

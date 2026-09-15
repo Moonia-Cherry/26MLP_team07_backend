@@ -37,6 +37,9 @@ from ml_core import (
     DatasetSpec,
     ExperimentConfig,
     ExperimentResult,
+    ExperimentExecutionError,
+    InvalidExperimentError,
+    MLCoreError,
     ModelSpec,
     list_datasets,
     list_models,
@@ -139,7 +142,7 @@ def run_experiment(config: ExperimentConfig) -> ExperimentResult: ...
 
 ## Exception contract
 
-建议 `ml_core` 顶层公开一个 `MLCoreError` 基类，以及两个最小子类：
+`ml_core` 顶层必须公开一个 `MLCoreError` 基类，以及两个最小子类：
 
 - `InvalidExperimentError`：未知 id、任务类型不兼容、参数越界或数据不可用等调用方可修正的问题；
 - `ExperimentExecutionError`：训练或评价过程失败。

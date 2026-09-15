@@ -47,6 +47,7 @@ Git submodule 只是把独立 ML 仓库固定到可复现的 commit；它不是�
 
 - FastAPI 的 health、models、datasets、experiments 四个端点。
 - 严格 Pydantic 请求/响应 schema 和一致的 HTTP 错误映射。
+- 可配置的显式 CORS 白名单与 OpenAPI 合同。
 - `MLBackend` Protocol 与只访问公共包入口的 `PackageMLBackend`。
 - ML 不可用时的明确状态和 503 行为。
 - 用测试替身验证 interaction；测试替身不进入生产应用。

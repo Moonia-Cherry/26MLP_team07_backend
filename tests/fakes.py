@@ -1,4 +1,4 @@
-from backend.interaction.schemas import (
+from backend.contracts import (
     DatasetSpec,
     ExperimentConfig,
     ExperimentResult,
