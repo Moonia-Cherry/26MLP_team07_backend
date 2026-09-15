@@ -1,4 +1,6 @@
-# 《机器学习理论与实践》交互平台
+# 26MLP_team07_backend
+
+《机器学习理论与实践》第 07 组后端与集成交付仓库。
 
 本仓库负责课程大作业的 FastAPI interaction layer、与独立 ML 仓库之间的稳定集成边界，以及可选的统一交付入口。前端由另一位成员负责；无论它最终位于本仓库还是独立仓库，都只通过 HTTP/OpenAPI 使用本服务。模型算法、训练、数据处理和评价仍由 [26MLP_team07](https://github.com/Icey18899877399/26MLP_team07) 独立维护，本仓库不会复制一套 ML Core。
 
@@ -15,8 +17,8 @@ ML 源码以 Git submodule 位于 `external/ml-core`。Submodule 保留独立历
 新 clone：
 
 ```powershell
-git clone --recurse-submodules <interaction-repo-url>
-cd 15a-machine-practice
+git clone --recurse-submodules https://github.com/Moonia-Cherry/26MLP_team07_backend.git
+cd 26MLP_team07_backend
 ```
 
 已经 clone 但尚未获取 submodule：
