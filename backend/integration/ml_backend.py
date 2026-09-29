@@ -9,11 +9,11 @@ from typing import Any, Callable, Protocol, Sequence, cast
 from pydantic import BaseModel, ValidationError
 
 from backend.contracts import (
-    DatasetSpec,
+    DatasetInfo,
     ExperimentConfig,
     ExperimentResult,
     MLBackendStatus,
-    ModelSpec,
+    ModelInfo,
 )
 
 
@@ -39,9 +39,9 @@ class MLExecutionError(MLBackendError):
 class MLBackend(Protocol):
     def status(self) -> MLBackendStatus: ...
 
-    def list_models(self) -> list[ModelSpec]: ...
+    def list_models(self) -> list[ModelInfo]: ...
 
-    def list_datasets(self) -> list[DatasetSpec]: ...
+    def list_datasets(self) -> list[DatasetInfo]: ...
 
     def run_experiment(self, config: ExperimentConfig) -> ExperimentResult: ...
 
@@ -49,16 +49,25 @@ class MLBackend(Protocol):
 class PackageMLBackend:
     """Call only the stable public API exported by the external ``ml_core`` package."""
 
+    _request_error_names = (
+        "UnknownModelError",
+        "UnknownDatasetError",
+        "IncompatibleDatasetError",
+        "InvalidConfigError",
+        "InvalidParameterError",
+    )
+
     _required_exports = (
         "list_models",
         "list_datasets",
         "run_experiment",
-        "ModelSpec",
-        "DatasetSpec",
+        "ArtifactInfo",
+        "ModelInfo",
+        "DatasetInfo",
         "ExperimentConfig",
         "ExperimentResult",
         "MLCoreError",
-        "InvalidExperimentError",
+        *_request_error_names,
         "ExperimentExecutionError",
     )
 
@@ -70,7 +79,7 @@ class PackageMLBackend:
         self._package_name = package_name
         self._module: ModuleType | None = None
         self._unavailable_reason: str | None = None
-        self._invalid_experiment_error: type[Exception] | None = None
+        self._request_errors: tuple[type[Exception], ...] = ()
 
         try:
             module = importer(package_name)
@@ -92,8 +101,9 @@ class PackageMLBackend:
             )
             return
         self._module = module
-        self._invalid_experiment_error = cast(
-            type[Exception], getattr(module, "InvalidExperimentError")
+        self._request_errors = tuple(
+            cast(type[Exception], getattr(module, name))
+            for name in self._request_error_names
         )
 
     def status(self) -> MLBackendStatus:
@@ -109,13 +119,13 @@ class PackageMLBackend:
             detail="ML public package API 已连接",
         )
 
-    def list_models(self) -> list[ModelSpec]:
+    def list_models(self) -> list[ModelInfo]:
         values = self._call("list_models")
-        return self._validate_sequence(values, ModelSpec, "model")
+        return self._validate_sequence(values, ModelInfo, "model")
 
-    def list_datasets(self) -> list[DatasetSpec]:
+    def list_datasets(self) -> list[DatasetInfo]:
         values = self._call("list_datasets")
-        return self._validate_sequence(values, DatasetSpec, "dataset")
+        return self._validate_sequence(values, DatasetInfo, "dataset")
 
     def run_experiment(self, config: ExperimentConfig) -> ExperimentResult:
         module = self._require_module()
@@ -123,16 +133,14 @@ class PackageMLBackend:
         try:
             package_config = config_type(**config.model_dump(mode="python"))
         except Exception as exc:
-            if isinstance(exc, (TypeError, ValueError, ValidationError)) or (
-                self._invalid_experiment_error
-                and isinstance(exc, self._invalid_experiment_error)
+            if isinstance(exc, (TypeError, ValueError, ValidationError)) or isinstance(
+                exc, self._request_errors
             ):
                 raise MLRequestError(str(exc)) from exc
             logger.exception(
                 "ML experiment configuration construction failed",
                 extra={
                     "model": config.model,
-                    "variant": config.variant,
                     "dataset": config.dataset,
                     "ml_exception_type": type(exc).__name__,
                 },
@@ -144,15 +152,12 @@ class PackageMLBackend:
                 package_config
             )
         except Exception as exc:
-            if self._invalid_experiment_error and isinstance(
-                exc, self._invalid_experiment_error
-            ):
+            if isinstance(exc, self._request_errors):
                 raise MLRequestError(str(exc)) from exc
             logger.exception(
                 "ML experiment execution failed",
                 extra={
                     "model": config.model,
-                    "variant": config.variant,
                     "dataset": config.dataset,
                     "ml_exception_type": type(exc).__name__,
                 },
@@ -166,7 +171,6 @@ class PackageMLBackend:
                 "ML package returned an invalid experiment result",
                 extra={
                     "model": config.model,
-                    "variant": config.variant,
                     "dataset": config.dataset,
                 },
             )
@@ -209,7 +213,7 @@ class PackageMLBackend:
 
         exception_names = (
             "MLCoreError",
-            "InvalidExperimentError",
+            *cls._request_error_names,
             "ExperimentExecutionError",
         )
         exception_types: dict[str, type[Exception]] = {}
@@ -222,7 +226,7 @@ class PackageMLBackend:
 
         base = exception_types.get("MLCoreError")
         if base:
-            for name in ("InvalidExperimentError", "ExperimentExecutionError"):
+            for name in (*cls._request_error_names, "ExperimentExecutionError"):
                 value = exception_types.get(name)
                 if value and not issubclass(value, base):
                     problems.append(f"{name} must inherit MLCoreError")
