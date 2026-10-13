@@ -42,7 +42,13 @@ def list_datasets() -> tuple[DatasetInfo, ...]: ...
 def run_experiment(config: ExperimentConfig) -> ExperimentResult: ...
 ```
 
-列表只广告确实可运行的项，且顺序稳定。当前模型 ID 为 `kmeans.optimized`、`logistic_regression.optimized`；数据集 ID 为 `seeds`、`wdbc`。
+列表只广告确实可运行的项，且顺序稳定。当前模型 ID（按序）：
+`cart_decision_tree.optimized`、`dbscan.optimized`、`gaussian_naive_bayes.optimized`、
+`gbdt_regression.optimized`、`isolation_forest.optimized`、`kmeans.optimized`、
+`knn.optimized`、`linear_regression.optimized`、`logistic_regression.optimized`、
+`mlp_regression.optimized`、`one_class_svm.optimized`、`random_forest.optimized`；
+数据集 ID（按序）：`23_mammography`、`6_cardio`、`california_housing`、
+`concrete`、`seeds`、`wdbc`。
 
 ## 类型合同
 
@@ -52,7 +58,7 @@ def run_experiment(config: ExperimentConfig) -> ExperimentResult: ...
 - `ArtifactInfo`: `name`, `media_type`, `uri`
 - `ExperimentResult`: `run_id`, `model`, `dataset`, `task`, `effective_params`, `metrics`, `artifacts`, `metadata`
 
-`test_size` 默认为 `None`；分类可以提供 0 到 1 之间的值，聚类不得提供。模型版本已经属于稳定模型 ID，不再有独立 `variant`。
+`test_size` 默认为 `None`；分类与回归可以提供 0 到 1 之间的值，聚类不得提供，异常检测忽略该值。模型版本已经属于稳定模型 ID，不再有独立 `variant`。
 
 所有返回值必须能递归转换为 JSON primitive/list/object。metrics 不允许 NaN/Infinity；不得返回 estimator、callable、Path、NumPy object、figure 或文件句柄。
 
